@@ -1,3 +1,3 @@
 # mY-GPT
 
-Train a small transfomer on the whatsapp text between my mom and I 
+Training a transfomer on whatsapp texts between my mom and I 
