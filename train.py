@@ -1,5 +1,6 @@
 from tokenization import tokenizer
 import torch
+from bigram_model import BiagramLanguageModel
 
 filepath = "C:/Users/sd809918/Downloads/Project_code/WhatsApp_Chat/_chat.txt"
 
@@ -48,3 +49,14 @@ for b in range(batch_size):
         context = xb[b, :t+1]
         target = yb[b, t]
         print(f"when input is {context.tolist()} the target: {target}")
+
+
+model = BiagramLanguageModel(vocab_size)
+
+logits, loss = model(xb, yb)
+
+print(logits.shape)
+print(loss)
+
+idx = torch.zeros((1, 1), dtype=torch.long)
+print(decode(model.generate(idx, max_new_tokens=100)[0].tolist()))
