@@ -1,19 +1,31 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+from head import Head
 
 torch.manual_seed(1337)
+device = "cuda" if torch.cuda.is_available else "cpu"
 
 class BiagramLanguageModel(nn.Module):
 
-    def __init__(self, vocab_size):
+    def __init__(self, vocab_size, n_embd, block_size, head_size):
         super().__init__()
-        self.token_embedding_table = nn.Embedding(vocab_size, vocab_size)
+        self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
+        self.position_embedding_table = nn.Embedding(block_size, n_embd)
+        self.sa_head = Head(head_size, n_embd, block_size)
+        self.lm_head = nn.Linear(n_embd, vocab_size)
+        self.block_size=block_size
 
     def forward(self, idx, targets=None):
 
+        B, T = idx.shape
+
         # idx and targets are both (B,T) tensors of integers
-        logits = self.token_embedding_table(idx) # (B, T, C)
+        tok_emb = self.token_embedding_table(idx) # (B, T, C)
+        pos_emb = self.position_embedding_table(torch.arange(T, device=idx.device)) #(T, C)
+        x = tok_emb + pos_emb # (B, T, C)
+        x = self.sa_head(x) # apply one head of self-attention. (B, T, C)
+        logits = self.lm_head(x) # (B, T, Vocab_size)
 
         
         if targets is None:
@@ -29,8 +41,10 @@ class BiagramLanguageModel(nn.Module):
     def generate(self, idx, max_new_tokens):
         # idx is (B, T) array of indices in the current context
         for _ in range(max_new_tokens):
+            # crop the idx to the context size because the position embeddings have size context, embeddings
+            idx_cond = idx[:, -self.block_size:]
             # get the predictions
-            logits, loss = self(idx)
+            logits, loss = self(idx_cond)
             # focus only in the last time step
             logits = logits[:, -1, :] # becomes (B, C)
             # apply softmax to get probabilities

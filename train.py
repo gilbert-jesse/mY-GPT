@@ -4,11 +4,13 @@ from bigram_model import BiagramLanguageModel
 
 
 filepath = "C:/Users/sd809918/Downloads/Project_code/WhatsApp_Chat/_chat.txt"
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 eval_iters = 200
-max_iter = 3000
-eval_interval = 300
-learning_rate = 1e-2
+max_iter = 5000
+eval_interval = 500
+learning_rate = 1e-3
+n_embd = 32
+head_size=32
 
 
 data, encode, decode, vocab_size = tokenizer(filepath)
@@ -17,7 +19,6 @@ n = int(0.9*len(data))
 train_data = data[:n]
 val_data = data[n:]
 
-block_size = 8
 
 torch.manual_seed(1337)
 batch_size = 4 # how many independent sequences will we process in parallel?
@@ -48,7 +49,7 @@ def estimate_loss():
 
 
 
-model = BiagramLanguageModel(vocab_size)
+model = BiagramLanguageModel(vocab_size, n_embd, block_size, head_size)
 model = model.to(device)
 
 # create a PyTorch optimizer
