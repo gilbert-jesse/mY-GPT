@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 from head import Head
+from multihead import MultiHeadAttention
+from Feed_Forward import FeedForward
 
 torch.manual_seed(1337)
 device = "cuda" if torch.cuda.is_available else "cpu"
@@ -12,7 +14,8 @@ class BiagramLanguageModel(nn.Module):
         super().__init__()
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size, n_embd)
-        self.sa_head = Head(head_size, n_embd, block_size)
+        self.sa_heads = MultiHeadAttention(4, n_embd//4, n_embd=n_embd, block_size=block_size)
+        self.feedfwd = FeedForward(n_embd)
         self.lm_head = nn.Linear(n_embd, vocab_size)
         self.block_size=block_size
 
@@ -24,7 +27,8 @@ class BiagramLanguageModel(nn.Module):
         tok_emb = self.token_embedding_table(idx) # (B, T, C)
         pos_emb = self.position_embedding_table(torch.arange(T, device=idx.device)) #(T, C)
         x = tok_emb + pos_emb # (B, T, C)
-        x = self.sa_head(x) # apply one head of self-attention. (B, T, C)
+        x = self.sa_heads(x) # apply one head of self-attention. (B, T, C)
+        x = self.feedfwd(x) # (B, T, C)
         logits = self.lm_head(x) # (B, T, Vocab_size)
 
         
