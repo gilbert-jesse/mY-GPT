@@ -10,6 +10,6 @@ class Block(nn.Module):
         self.feedfwd = FeedForward(n_embd)
 
     def forward(self, x):
-        x = self.self_atten(x)
-        x = self.feedfwd(x)
+        x = x + self.self_atten(x)
+        x = x + self.feedfwd(x)
         return x
